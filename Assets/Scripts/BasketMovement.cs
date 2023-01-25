@@ -10,7 +10,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.Rendering.Universal;
 using Windows.Kinect;
 using Joint = Windows.Kinect.Joint;
 
@@ -22,6 +22,9 @@ public class BasketMovement : MonoBehaviour
     /// </summary>
     private float playerSize = 10;
 
+    private BoxCollider2D boxCollider;
+    private Light2D appleDetectionLight;
+
     #region Movement Type
     [Range(0.0f, 15.0f)]
     [Tooltip("The max distance reaches when at or past the max body angle")]
@@ -30,61 +33,69 @@ public class BasketMovement : MonoBehaviour
     /// <summary>
     /// The types of input for moving the basket.
     /// </summary>
-    private enum MovementType { LEAN, CATCH, TWOHANDS, MOVE }
+    private enum MovementType { LEAN, CATCH, MOVE }
 
     [Tooltip("The current type of input to use for moving the basket")]
     [SerializeField] private MovementType currentMovementType = MovementType.LEAN;
 
+    /// <summary>
+    /// The types of difficulty for the amount of movement needed by the user.
+    /// </summary>
+    private enum MovementDifficulty { EASY, MEDIUM, HARD }
+
+    [Tooltip("The current type of difficulty needed for moving the basket")]
+    [SerializeField] private MovementDifficulty currentMovementDiffculty = MovementDifficulty.MEDIUM;
+
+    #region Move Mode
     [Header("Move Mode")]
     [Range(0.0f, 10.0f)]
     [Tooltip("The max position to check for move movement")]
-    [SerializeField] private float maxMovePos = 1.0f;
+    [SerializeField] private float[] maxMovePos = new float[] { 0.5f, 1.0f, 2.0f };
 
-    [Range(0.0f, 30.0f)]
+    [Range(0.0f, 100.0f)]
     [Tooltip("The amount of smoothing to apply to movement (higher means less smoothing)")]
     [SerializeField] private float moveMovementSmoothing = 10;
+    #endregion
 
+    #region Catch Mode
     [Header("Catch Mode")]
     [Range(0.0f, 10.0f)]
     [Tooltip("The max hand positions to check for catch movement")]
-    [SerializeField] private float maxCatchPos = 1.0f;
+    [SerializeField] private float[] maxCatchPos = new float[] { 0.5f, 1.0f, 1.5f };
 
-    [Range(0.0f, 30.0f)]
+    [Range(0.0f, 100.0f)]
     [Tooltip("The amount of smoothing to apply to movement (higher means less smoothing)")]
     [SerializeField] private float catchMovementSmoothing = 10;
     #endregion
 
+    #region Lean Mode
     [Header("Lean Mode")]
     [Range(0.0f, 30.0f)]
     [Tooltip("The max angle needed for the max distance of the basket")]
-    [SerializeField] private float maxAngle = 10;
+    [SerializeField] private float[] maxAngle = new float[] { 3, 6, 9 };
 
-    [Range(0.0f, 30.0f)]
+    [Range(0.0f, 100.0f)]
     [Tooltip("The amount of smoothing to apply to movement (higher means less smoothing)")]
     [SerializeField] private float leanMovementSmoothing = 10;
+    #endregion
+    #endregion
 
     #region Kinnect
     private Dictionary<ulong, GameObject> _Bodies = new Dictionary<ulong, GameObject>();
     private BodySourceManager bodyManager;
 
-    private List<JointType> leanJoints = new List<JointType>
+    private JointType[] leanJoints = new JointType[]
     {
         JointType.SpineBase,
-        JointType.Neck
+        JointType.SpineShoulder
     };
 
-    private List<JointType> moveJoints = new List<JointType>
+    private JointType[] moveJoints = new JointType[]
     {
-        JointType.SpineBase,
+        JointType.SpineBase
     };
 
-    private List<JointType> twoHandsJoints = new List<JointType>
-    {
-        JointType.HandLeft,
-        JointType.HandRight
-    };
-
-    private List<JointType> catchJoints = new List<JointType>
+    private JointType[] handJoints = new JointType[]
     {
         JointType.HandLeft,
         JointType.HandRight
@@ -108,6 +119,8 @@ public class BasketMovement : MonoBehaviour
     private void InitializeComponents()
     {
         bodyManager = FindObjectOfType<BodySourceManager>();
+        boxCollider = GetComponent<BoxCollider2D>();
+        appleDetectionLight = GetComponentInChildren<Light2D>();
     }
     #endregion
 
@@ -117,6 +130,8 @@ public class BasketMovement : MonoBehaviour
     /// </summary>
     private void FixedUpdate()
     {
+        CheckForApple();
+
         #region Get Kinect Data
         if (bodyManager == null) return;
 
@@ -126,12 +141,23 @@ public class BasketMovement : MonoBehaviour
 
         List<ulong> _trackedIds = new List<ulong>();
 
+        ulong centerID = 0;
+        float currentLow = Mathf.Infinity;
+
         foreach (var body in _data)
         {
             if (body == null) continue;
 
-            if (body.IsTracked) _trackedIds.Add(body.TrackingId);
+            var lowCheck = Mathf.Abs(body.Joints[JointType.SpineBase].Position.X);
+
+            if (body.IsTracked && lowCheck < currentLow)
+            {
+                centerID = body.TrackingId;
+                currentLow = lowCheck;
+            }
         }
+
+        if(centerID != 0) _trackedIds.Add(centerID);
         #endregion
 
         #region Delete Untracked Bodies
@@ -152,7 +178,7 @@ public class BasketMovement : MonoBehaviour
         {
             if (body == null) continue;
 
-            if (body.IsTracked)
+            if (body.IsTracked && body.TrackingId == centerID)
             {
                 if (!_Bodies.ContainsKey(body.TrackingId))
                 {
@@ -192,26 +218,27 @@ public class BasketMovement : MonoBehaviour
     /// <param name="body">The body being checked.</param>
     private void RefreshBodyObject(Body body)
     {
-        // Calculates the angle of the users spine
-
-        //print("X: " + dir);
-        //print("Angle: " + angle);
-
-        var targetPos = 0.5f;
-        var movementSmoothing = 10.0f;
+        var targetPos = 0.0f;
+        var movementSmoothing = 0.0f;
 
         switch (currentMovementType)
         {
+            #region Move Mode
             case MovementType.MOVE:
                 targetPos = CalculateMoveTargetPosition(body.Joints[moveJoints[0]].Position.X);
                 movementSmoothing = moveMovementSmoothing;
                 break;
+            #endregion
+
+            #region Catch Mode
             case MovementType.CATCH:
-                targetPos = CalculateCatchTargetPosition(body.Joints[moveJoints[0]].Position.X, body.Joints[moveJoints[1]].Position.X);
+                var centerXCatch = body.Joints[JointType.SpineMid].Position.X;
+                targetPos = CalculateCatchTargetPosition(body.Joints[handJoints[0]].Position.X - centerXCatch, body.Joints[handJoints[1]].Position.X) - centerXCatch;
                 movementSmoothing = catchMovementSmoothing;
                 break;
-            case MovementType.TWOHANDS:
-                break;
+            #endregion
+
+            #region Lean Mode
             default:
             case MovementType.LEAN:
                 var dir = ((Vector2)(GetVector3FromJoint(body.Joints[leanJoints[0]]) - GetVector3FromJoint(body.Joints[leanJoints[1]]))).normalized;
@@ -219,6 +246,7 @@ public class BasketMovement : MonoBehaviour
                 targetPos = CalculateLeanTargetPosition(angle);
                 movementSmoothing = leanMovementSmoothing;
                 break;
+            #endregion
         }
 
         UpdateBasketPosition(targetPos, movementSmoothing);
@@ -236,42 +264,55 @@ public class BasketMovement : MonoBehaviour
     #endregion
 
     #region Calculate Target Position
+    /// <summary>
+    /// Calculates the current lerp of the players spine angle.
+    /// </summary>
+    /// <param name="angle">The angle of the users spine.</param>
+    /// <returns></returns>
     private float CalculateLeanTargetPosition(float angle)
     {
-        var targetPositionLerp = Mathf.InverseLerp(-maxAngle, maxAngle, angle); // Calculates the lerp of the angle
+        var difficulty = (int)currentMovementDiffculty;
+        var targetPositionLerp = Mathf.InverseLerp(-maxAngle[difficulty], maxAngle[difficulty], angle); // Calculates the lerp of the angle
+        print("Spine Angle: " + angle);
 
         return targetPositionLerp;
     }
 
+    /// <summary>
+    /// Calculates the current lerp based on the users x position from the center of the screen.
+    /// </summary>
+    /// <param name="jointXPos">The x position from the center of the sensor.</param>
+    /// <returns></returns>
     private float CalculateMoveTargetPosition(float jointXPos)
     {
-        print("Joint Pos: " + jointXPos);
-        var targetPositionLerp = Mathf.InverseLerp(-maxMovePos, maxMovePos, jointXPos);
+        var difficulty = (int)currentMovementDiffculty;
+        var targetPositionLerp = Mathf.InverseLerp(-maxMovePos[difficulty], maxMovePos[difficulty], jointXPos);
 
         return targetPositionLerp;
     }
 
+    /// <summary>
+    /// Calculates the current lerp based on the position of the users hands.
+    /// </summary>
+    /// <param name="hand1Pos">The position of the users left hand.</param>
+    /// <param name="hand2Pos">The position of the users right hand.</param>
+    /// <returns></returns>
     private float CalculateCatchTargetPosition(float hand1Pos, float hand2Pos)
     {
-        var targetPosition1 = Mathf.InverseLerp(-maxCatchPos, maxCatchPos, hand1Pos);
-        var targetPosition2 = Mathf.InverseLerp(-maxCatchPos, maxCatchPos, hand2Pos);
+        var difficulty = (int)currentMovementDiffculty;
+        var targetPosition1 = Mathf.InverseLerp(-maxCatchPos[difficulty], maxCatchPos[difficulty], hand1Pos);
+        var targetPosition2 = Mathf.InverseLerp(-maxCatchPos[difficulty], maxCatchPos[difficulty], hand2Pos);
         var targetPositionLerp = (targetPosition1 + targetPosition2) / 2;
-
-        return targetPositionLerp;
-    }
-
-    private float CalculateTwoHandsTargetPosition(float angle)
-    {
-        var targetPositionLerp = 0.0f;
 
         return targetPositionLerp;
     }
     #endregion
 
     /// <summary>
-    /// Updates the position of the basket based on the user's spine angle.
+    /// Updates the position of the basket to move towards the current lerp value based on movement smoothing.
     /// </summary>
-    /// <param name="angle">The angle of the users spine.</param>
+    /// <param name="targetPositionLerp">The current target lerp for the basket position.</param>
+    /// <param name="movementSmoothing">The amount to smooth the basket movement.</param>
     private void UpdateBasketPosition(float targetPositionLerp, float movementSmoothing)
     {
         var pos = transform.position;
@@ -280,6 +321,22 @@ public class BasketMovement : MonoBehaviour
         // Sets the positions of the basket
         pos.x = Mathf.Lerp(pos.x, targetPosition, Time.fixedDeltaTime*movementSmoothing);
         transform.position = pos;
+    }
+
+    private void CheckForApple()
+    {
+        if (appleDetectionLight == null) return;
+
+        RaycastHit2D hit = Physics2D.BoxCast(boxCollider.bounds.center, boxCollider.bounds.size, 0, Vector2.up, 10);
+
+        if (hit.transform != null && !hit.transform.gameObject.CompareTag("Bad"))
+        {
+            appleDetectionLight.color = Color.green;
+        }
+        else
+        {
+            appleDetectionLight.color = Color.red;
+        }
     }
     #endregion
 }

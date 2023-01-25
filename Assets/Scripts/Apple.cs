@@ -26,6 +26,10 @@ public class Apple : MonoBehaviour
     [Tooltip("The points gained for picking up this type of apple")]
     [SerializeField] private int points = 50;
 
+    [Range(-10.0f, 0.0f)]
+    [Tooltip("The height below the screen to remove the apple")]
+    [SerializeField] private float offscreenHeight = -6.0f;
+
     #region Speed
     [Header("Speed")]
     [Tooltip("The type of random generation for the fall speed")]
@@ -47,7 +51,10 @@ public class Apple : MonoBehaviour
     /// The current terminal velocity of this apple.
     /// </summary>
     private float currentMaxSpeedSquared = 5.0f;
+    private float currentMaxSpeed = 5.0f;
     private bool hasNotClampedSpeed = true; // Used to check if the speed has been clamp to its max yet
+
+    private float speedMod = 0.0f;
 
     [Range(0.0f, 50.0f)]
     [Tooltip("The rate of speed increase for the apple")]
@@ -77,8 +84,6 @@ public class Apple : MonoBehaviour
     private void Awake()
     {
         InitializeComponents();
-        InitializeRotation();
-        InitializeSpeeds();
     }
 
     /// <summary>
@@ -87,6 +92,14 @@ public class Apple : MonoBehaviour
     private void InitializeComponents()
     {
         rigidbody2d = GetComponent<Rigidbody2D>();
+    }
+
+    public void InitializeSpeedMod(float speedMod)
+    {
+        this.speedMod = speedMod;
+
+        InitializeRotation();
+        InitializeSpeeds();
     }
 
     /// <summary>
@@ -110,7 +123,10 @@ public class Apple : MonoBehaviour
     {
         minFallSpeedSquared = minFallSpeed * minFallSpeed;
         maxFallSpeedSquared = maxFallSpeed * maxFallSpeed;
-        currentMaxSpeedSquared = CustomRandom.RandomGeneration(minFallSpeedSquared, maxFallSpeedSquared, fallSpeedGenerationType);
+        currentMaxSpeedSquared = CustomRandom.RandomGeneration(minFallSpeedSquared, maxFallSpeedSquared, fallSpeedGenerationType) * speedMod;
+        currentMaxSpeed = Mathf.Sqrt(currentMaxSpeedSquared);
+
+        accelerationSpeed *= speedMod;
     }
     #endregion
 
@@ -120,18 +136,26 @@ public class Apple : MonoBehaviour
     private void FixedUpdate()
     {
         // Removes objects when they fall too low
-        if (transform.position.y < -8.0f) Destroy(gameObject); 
-        
+        if (transform.position.y < offscreenHeight)
+        {
+            if(points > 0)
+            {
+                ResetCombo();
+            }
+
+            Destroy(gameObject);
+        }
+
         // Increases Speed
-        else if(rigidbody2d.velocity.sqrMagnitude < currentMaxSpeedSquared)
+        else if (rigidbody2d.velocity.sqrMagnitude < currentMaxSpeedSquared)
         {
             rigidbody2d.AddForce(Vector2.down * accelerationSpeed * Time.fixedDeltaTime, ForceMode2D.Impulse);
         }
 
         // Clamps Speed
-        else if(hasNotClampedSpeed)
+        else if (hasNotClampedSpeed)
         {
-            rigidbody2d.velocity = rigidbody2d.velocity.normalized * Mathf.Sqrt(currentMaxSpeedSquared);
+            rigidbody2d.velocity = rigidbody2d.velocity.normalized * currentMaxSpeed;
             hasNotClampedSpeed = false;
         }
     }
@@ -154,7 +178,17 @@ public class Apple : MonoBehaviour
     /// </summary>
     protected virtual void EnterBasket()
     {
-        UpdateScore(points);
+        UpdateScore(points, transform.position);
+     
+        if(points > 0)
+        {
+            IncreaseCombo();
+        }
+        else
+        {
+            ResetCombo();
+        }
+
         Destroy(gameObject);
     }
     #endregion

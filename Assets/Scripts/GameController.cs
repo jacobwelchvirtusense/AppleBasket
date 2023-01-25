@@ -21,12 +21,19 @@ public class GameController : MonoBehaviour
     /// <summary>
     /// The current total of points the player has.
     /// </summary>
-    private int currentPointTotal;
+    private int currentPointTotal = 0;
+
+    private int currentCombo = 0;
+
+    private float comboModifier = 0.25f;
 
     /// <summary>
     /// The scene instance of the GameController.
     /// </summary>
     private static GameController instance;
+
+    [Tooltip("The text prefab for increments to score")]
+    [SerializeField] private GameObject scoreText;
 
     #region Timer
     [Header("Timer")]
@@ -90,6 +97,7 @@ public class GameController : MonoBehaviour
     /// </summary>
     private void Start()
     {
+        UIManager.InitializeTimer(Mathf.RoundToInt(Mathf.Lerp(minTimerAmount, maxTimerAmount, currentTimer)));
         StartCoroutine(CountdownLoop());
     }
 
@@ -107,20 +115,58 @@ public class GameController : MonoBehaviour
     /// Updates the score the player has.
     /// </summary>
     /// <param name="increment">Increments the player's score by this amount.</param>
-    public static void UpdateScore(int increment)
+    public static void UpdateScore(int increment, Vector2 location)
     {
-        instance.UpdateSceneScore(increment);
+        instance.UpdateSceneScore(increment, location);
     }
 
     /// <summary>
     /// Updates the non-static score for the game.
     /// </summary>
     /// <param name="increment">Increments the player's score by this amount.</param>
-    public void UpdateSceneScore(int increment)
+    public void UpdateSceneScore(int increment, Vector2 location)
     {
-        currentPointTotal += increment;
+        var actualIncrement = ComboModifier(increment);
+        currentPointTotal += actualIncrement;
+
+        var text = Instantiate(scoreText, location, Quaternion.identity);
+        text.GetComponent<ScoreIncrementText>().InitializeScore(actualIncrement);
+
         UIManager.UpdateScore(currentPointTotal);
     }
+
+    private int ComboModifier(int increment)
+    {
+        var amount = increment;
+
+        if(increment > 0) amount += (int)((currentCombo * comboModifier) * increment);
+
+        return amount;
+    }
+
+    #region Combo
+    public static void IncreaseCombo()
+    {
+        instance.UpdateSceneCombo();
+    }
+
+    public void UpdateSceneCombo()
+    {
+        currentCombo++;
+        UIManager.UpdateCombo(currentCombo);
+    }
+
+    public static void ResetCombo()
+    {
+        instance.ResetSceneCombo();
+    }
+
+    public void ResetSceneCombo()
+    {
+        currentCombo = 0;
+        UIManager.UpdateCombo(currentCombo);
+    }
+    #endregion
     #endregion
 
     #region Countdown
@@ -160,14 +206,15 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     private IEnumerator GameTimer()
     {
-        int t = Mathf.RoundToInt(Mathf.Lerp(minTimerAmount, maxTimerAmount, currentTimer));
+        float t = Mathf.RoundToInt(Mathf.Lerp(minTimerAmount, maxTimerAmount, currentTimer));
 
         do
         {
             UIManager.UpdateTimer(t);
-            yield return new WaitForSeconds(1);
+            yield return new WaitForEndOfFrame();
+            t -= Time.deltaTime;
         }
-        while (t-- > 0);
+        while (t > 0);
 
         EndGame();
     }

@@ -12,6 +12,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
@@ -21,11 +22,27 @@ public class UIManager : MonoBehaviour
     /// </summary>
     private static UIManager instance;
 
+    private static int timerStartingAmount = 0;
+
     // UI objects
-    private static TextMeshProUGUI countDown;
-    private static TextMeshProUGUI score;
-    private static TextMeshProUGUI timerUI;
-    private static TextMeshProUGUI endMessage;
+    [SerializeField] private TextMeshProUGUI countDown;
+    [SerializeField] private TextMeshProUGUI score;
+    [SerializeField] private TextMeshProUGUI timerUI;
+    [SerializeField] private TextMeshProUGUI combo;
+    [SerializeField] private TextMeshProUGUI endMessage;
+
+    private static TextMeshProUGUI CountDown;
+    private static TextMeshProUGUI Score;
+    private static TextMeshProUGUI TimerUI;
+    private static TextMeshProUGUI Combo;
+    private static TextMeshProUGUI EndMessage;
+
+    // Images
+    [SerializeField] private Image timerBar1;
+    [SerializeField] private Image timerBar2;
+
+    private static Image TimerBar1;
+    private static Image TimerBar2;
     #endregion
 
     #region Functions
@@ -44,29 +61,30 @@ public class UIManager : MonoBehaviour
     /// </summary>
     private void GetUIReferences()
     {
-        foreach (Transform t in transform)
-        {
-            switch (t.name)
-            {
-                case "Count Down":
-                    countDown = t.gameObject.GetComponent<TextMeshProUGUI>();
-                    UpdateCountdown(0);
-                    break;
-                case "Score":
-                    score = t.gameObject.GetComponent<TextMeshProUGUI>();
-                    break;
-                case "Timer":
-                    timerUI = t.gameObject.GetComponent<TextMeshProUGUI>();
-                    UpdateTimer(0);
-                    break;
-                case "End Message":
-                    endMessage = t.gameObject.GetComponent<TextMeshProUGUI>();
-                    endMessage.gameObject.SetActive(false);
-                    break;
-                default:
-                    break;
-            }
-        }
+        #region Countdown
+        CountDown = countDown;
+        UpdateCountdown(0);
+        #endregion
+
+        #region Score
+        Score = score;
+        #endregion
+
+        #region Timer
+        TimerUI = timerUI;
+        TimerBar1 = timerBar1;
+        TimerBar2 = timerBar2;
+        #endregion
+
+        #region End Message
+        EndMessage = endMessage;
+        EndMessage.gameObject.SetActive(false);
+        #endregion
+
+        #region Combo
+        Combo = combo;
+        UpdateCombo(0);
+        #endregion
     }
     #endregion
 
@@ -77,11 +95,12 @@ public class UIManager : MonoBehaviour
     /// <param name="newCount">The current count.</param>
     public static void UpdateCountdown(int newCount)
     {
-        if (InstanceDoesntExist() || IsntValid(countDown)) return;
+        if (InstanceDoesntExist() || IsntValid(CountDown)) return;
 
         // Updates the countdown UI 
-        countDown.text = newCount.ToString();
-        countDown.gameObject.SetActive(newCount != 0);
+        //CountDown.text = newCount.ToString();
+
+        CountDown.gameObject.SetActive(newCount != 0);
     }
 
     /// <summary>
@@ -90,34 +109,88 @@ public class UIManager : MonoBehaviour
     /// <param name="newScore">The current score the player has.</param>
     public static void UpdateScore(int newScore)
     {
-        if (InstanceDoesntExist() || IsntValid(score)) return;
+        if (InstanceDoesntExist() || IsntValid(Score)) return;
 
         // Updates the score UI 
-        score.text = newScore.ToString();
+        Score.text = newScore.ToString();
+    }
+
+    #region Timer
+    public static void InitializeTimer(int startingTime)
+    {
+        timerStartingAmount = startingTime;
+        UpdateTimer(startingTime);
     }
 
     /// <summary>
     /// Updates the timer to its current time.
     /// </summary>
     /// <param name="newTime">The current time left of the timer.</param>
-    public static void UpdateTimer(int newTime)
+    public static void UpdateTimer(float newTime)
     {
-        if (InstanceDoesntExist() || IsntValid(timerUI)) return;
+        if (InstanceDoesntExist() || IsntValid(TimerUI)) return;
+
+        var seconds = (int)newTime;
+        var minutes = seconds / 60;
+        var leftOverSeconds = (seconds - (minutes * 60));
+        string secondsDisplayed = "";
+
+        if(leftOverSeconds < 10) secondsDisplayed += "0";
+        secondsDisplayed += leftOverSeconds;
 
         // Updates the timer UI 
-        timerUI.text = "Time left: " + newTime.ToString();
-        timerUI.gameObject.SetActive(newTime != 0);
+        TimerUI.text = minutes.ToString() + ":" + secondsDisplayed;
+        TimerUI.gameObject.SetActive(newTime != 0);
+
+        UpdateTimerBars(newTime);
     }
 
+    private static void UpdateTimerBars(float newTime)
+    {
+        if (IsntValid(TimerBar1) || IsntValid(TimerBar2)) return;
+
+        TimerBar1.fillAmount = newTime / timerStartingAmount;
+        TimerBar2.fillAmount = newTime / timerStartingAmount;
+    }
+
+    public IEnumerator UpdateTimerBarsRoutine(int newTime)
+    {
+        var t = (float)newTime;
+        var oneLess = newTime - 1;
+
+        do
+        {
+            t -= Time.deltaTime;
+
+            timerBar1.fillAmount = t / timerStartingAmount;
+            timerBar2.fillAmount = t / timerStartingAmount;
+
+            yield return new WaitForEndOfFrame();
+        }
+        while (t >= oneLess);
+    }
+    #endregion
+
+    #region Combo
+    public static void UpdateCombo(int newCombo)
+    {
+        if (InstanceDoesntExist() || IsntValid(Combo)) return;
+
+        Combo.text = "x" + newCombo.ToString();
+    }
+    #endregion
+
+    #region Display End Message
     /// <summary>
     /// Displays the message that should appear at the end of the game.
     /// </summary>
     public static void DisplayEndMessage()
     {
-        if (InstanceDoesntExist() || IsntValid(timerUI)) return;
+        if (InstanceDoesntExist() || IsntValid(EndMessage)) return;
 
-        endMessage.gameObject.SetActive(true);
+        EndMessage.gameObject.SetActive(true);
     }
+    #endregion
     #endregion
 
     #region Null Checks

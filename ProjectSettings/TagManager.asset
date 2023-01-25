@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - Basket
+  - Bad
   layers:
   - Default
   - TransparentFX

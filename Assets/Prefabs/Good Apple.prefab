@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 8867583307537885454}
   m_LocalRotation: {x: 0, y: 0, z: -0.37695193, w: 0.9262328}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
+  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
@@ -99,10 +99,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11b447e0d2d38ad46ad5846bbd9c8da3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  points: 1000
-  fallSpeedGenerationType: 0
-  minFallSpeed: 5
-  maxFallSpeed: 8
+  points: 200
+  offscreenHeight: -6
+  fallSpeedGenerationType: 1
+  minFallSpeed: 3
+  maxFallSpeed: 4
   accelerationSpeed: 4
   angularVelocityGenerationType: 0
   minAngularVelocity: 100
