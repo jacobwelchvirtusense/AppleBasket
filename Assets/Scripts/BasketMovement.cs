@@ -9,6 +9,7 @@
 *********************************/
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using Windows.Kinect;
@@ -25,6 +26,8 @@ public class BasketMovement : MonoBehaviour
     private BoxCollider2D boxCollider;
     private Light2D appleDetectionLight;
 
+    private static BasketMovement instance;
+
     #region Movement Type
     [Range(0.0f, 15.0f)]
     [Tooltip("The max distance reaches when at or past the max body angle")]
@@ -33,10 +36,13 @@ public class BasketMovement : MonoBehaviour
     /// <summary>
     /// The types of input for moving the basket.
     /// </summary>
-    private enum MovementType { LEAN, CATCH, MOVE }
+    public enum MovementType { LEAN, CATCH, MOVE }
 
     [Tooltip("The current type of input to use for moving the basket")]
-    [SerializeField] private MovementType currentMovementType = MovementType.LEAN;
+    [field:SerializeField] public MovementType currentMovementType { get; private set; } = MovementType.LEAN;
+
+    [Tooltip("The modifiers based on the selected movement type")]
+    [field:SerializeField] public float[] movementTypeSpeedModifier { get; private set; } = new float[3];
 
     /// <summary>
     /// The types of difficulty for the amount of movement needed by the user.
@@ -87,7 +93,7 @@ public class BasketMovement : MonoBehaviour
     private JointType[] leanJoints = new JointType[]
     {
         JointType.SpineBase,
-        JointType.SpineShoulder
+        JointType.SpineMid
     };
 
     private JointType[] moveJoints = new JointType[]
@@ -110,6 +116,7 @@ public class BasketMovement : MonoBehaviour
     /// </summary>
     private void Awake()
     {
+        instance = this;
         InitializeComponents();
     }
 
@@ -241,8 +248,13 @@ public class BasketMovement : MonoBehaviour
             #region Lean Mode
             default:
             case MovementType.LEAN:
-                var dir = ((Vector2)(GetVector3FromJoint(body.Joints[leanJoints[0]]) - GetVector3FromJoint(body.Joints[leanJoints[1]]))).normalized;
+                var dir = ((Vector2)(GetVector3FromJoint(body.Joints[leanJoints[0]]) - GetVector3FromJoint(body.Joints[leanJoints[1]])));
+
+                print("dir: " + dir);
+
                 var angle = (180 - Vector2.Angle(dir, Vector2.up)) * -Mathf.Sign(dir.x);
+                print("angle: " + angle);
+
                 targetPos = CalculateLeanTargetPosition(angle);
                 movementSmoothing = leanMovementSmoothing;
                 break;
@@ -273,7 +285,6 @@ public class BasketMovement : MonoBehaviour
     {
         var difficulty = (int)currentMovementDiffculty;
         var targetPositionLerp = Mathf.InverseLerp(-maxAngle[difficulty], maxAngle[difficulty], angle); // Calculates the lerp of the angle
-        print("Spine Angle: " + angle);
 
         return targetPositionLerp;
     }
@@ -337,6 +348,11 @@ public class BasketMovement : MonoBehaviour
         {
             appleDetectionLight.color = Color.red;
         }
+    }
+
+    public static float SpeedGameMod()
+    {
+        return instance.movementTypeSpeedModifier[(int)instance.currentMovementType];
     }
     #endregion
 }

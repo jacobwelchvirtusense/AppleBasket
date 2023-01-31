@@ -98,7 +98,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   minSpeed: 0.2
-  maxSpeed: 1
+  maxSpeed: 0.5
   screenBounds: 13
   clouds:
   - {fileID: 21300000, guid: 0d0e031c75c6a8a4ab727134884e8838, type: 3}

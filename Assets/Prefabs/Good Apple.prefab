@@ -13,9 +13,10 @@ GameObject:
   - component: {fileID: 1292276506596844257}
   - component: {fileID: 4790628259793007425}
   - component: {fileID: 2103066913939698006}
+  - component: {fileID: -777935243070502625}
   m_Layer: 0
   m_Name: Good Apple
-  m_TagString: Untagged
+  m_TagString: Good
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -104,10 +105,10 @@ MonoBehaviour:
   fallSpeedGenerationType: 1
   minFallSpeed: 3
   maxFallSpeed: 4
-  accelerationSpeed: 4
+  accelerationSpeed: 6
   angularVelocityGenerationType: 0
-  minAngularVelocity: 100
-  maxAngularVelocity: 250
+  minAngularVelocity: 125
+  maxAngularVelocity: 225
 --- !u!50 &4790628259793007425
 Rigidbody2D:
   serializedVersion: 4
@@ -145,3 +146,35 @@ CircleCollider2D:
   m_Offset: {x: 0, y: -0.08}
   serializedVersion: 2
   m_Radius: 1.3330991
+--- !u!114 &-777935243070502625
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8867583307537885454}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7db70e0ea77f5ac47a8f4565a9406397, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ShadowGroup: 0
+  m_ComponentVersion: 1
+  m_HasRenderer: 1
+  m_UseRendererSilhouette: 1
+  m_CastsShadows: 1
+  m_SelfShadows: 0
+  m_ApplyToSortingLayers: f53ff2f5000000000d77647b
+  m_ShapePath:
+  - {x: -1.187708, y: -0.7823677, z: 0}
+  - {x: -1.4145591, y: 0.05930238, z: 0}
+  - {x: -0.95948875, y: 0.85630006, z: 0}
+  - {x: 0.009010585, y: 1.3670425, z: 0}
+  - {x: 0.99823916, y: 0.9523445, z: 0}
+  - {x: 1.4111972, y: -0.1533435, z: 0}
+  - {x: 0.9479103, y: -1.0866185, z: 0}
+  - {x: 0.34418413, y: -1.3561925, z: 0}
+  - {x: -0.27143565, y: -1.4168822, z: 0}
+  m_ShapePathHash: -639701986
+  m_Mesh: {fileID: 0}
+  m_InstanceId: 43432

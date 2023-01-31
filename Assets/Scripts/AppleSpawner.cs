@@ -25,6 +25,12 @@ public class AppleSpawner : MonoBehaviour
     [Tooltip("The max dist from the center to spawn apples")]
     [SerializeField] private float maxSpawnDist = 8.0f;
 
+    private float lastSpawnX;
+
+    [Range(0.0f, 20.0f)]
+    [Tooltip("The max dist from the last spawned apple")]
+    [SerializeField] private float maxSpawnApartDistance = 8.0f;
+
     #region Spawn Rates
     [Header("Spawn rates")]
     [Range(0.0f, 1.0f)]
@@ -47,6 +53,8 @@ public class AppleSpawner : MonoBehaviour
 
     [Tooltip("Are multiplied into the apple speed for increased difficulty")]
     [SerializeField] private float[] appleSpeedModifiers = new float[] { 0.9f, 1.0f, 1.1f };
+
+    [Space(SPACE_BETWEEN_EDITOR_ELEMENTS)]
 
     [Tooltip("The type of random generation for the time between apple spawns")]
     [SerializeField] private CustomRandom.GenerationType timeBetweenSpawnsGenerationType = CustomRandom.GenerationType.RANDOM;
@@ -109,7 +117,7 @@ public class AppleSpawner : MonoBehaviour
         while (true)
         {
             var difficultyMod = spawnRateModifiers[(int)appleSpawnRateDifficulty];
-            yield return new WaitForSeconds(CustomRandom.RandomGeneration(minTimeBetweenSpawns, maxTimeBetweenSpawns, timeBetweenSpawnsGenerationType) * difficultyMod);
+            yield return new WaitForSeconds(CustomRandom.RandomGeneration(minTimeBetweenSpawns, maxTimeBetweenSpawns, timeBetweenSpawnsGenerationType) * difficultyMod / BasketMovement.SpeedGameMod());
             SpawnApple();
         }
     }
@@ -134,6 +142,14 @@ public class AppleSpawner : MonoBehaviour
     {
         var pos = transform.position;
         pos.x += CustomRandom.RandomGeneration(-maxSpawnDist, maxSpawnDist);
+        var distFromLastSpawn = pos.x - lastSpawnX;
+
+        if (Mathf.Abs(distFromLastSpawn) > maxSpawnApartDistance)
+        {
+            pos.x = Mathf.Clamp(pos.x, lastSpawnX-maxSpawnApartDistance, lastSpawnX+maxSpawnApartDistance);
+        }
+
+        lastSpawnX = pos.x;
 
         var apple = Instantiate(SelectApple(), pos, Quaternion.identity);
         apple.GetComponent<Apple>().InitializeSpeedMod(appleSpeedModifiers[(int)appleSpeedDifficulty]);

@@ -10,9 +10,11 @@
 *********************************/
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using static InspectorValues;
 using static AppleSpawner;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(AudioSource))]
 public class GameController : MonoBehaviour
@@ -24,6 +26,12 @@ public class GameController : MonoBehaviour
     private int currentPointTotal = 0;
 
     private int currentCombo = 0;
+
+    // Output Data
+    private int highestComboReached = 0;
+    private int goodApples = 0;
+    private int badApples = 0;
+    private int goodApplesMissed = 0;
 
     private float comboModifier = 0.25f;
 
@@ -52,10 +60,14 @@ public class GameController : MonoBehaviour
     [Space(SPACE_BETWEEN_EDITOR_ELEMENTS)]
     #endregion
 
-    #region Time Before Start
+    #region Time Before
     [Range(0, 10)]
     [Tooltip("The count down time before starting")]
     [SerializeField] private int timeBeforeStart = 3;
+
+    [Range(0.0f, 5.0f)]
+    [Tooltip("The count down time before starting")]
+    [SerializeField] private float timeBeforeEnd = 1.0f;
 
     [Space(SPACE_BETWEEN_EDITOR_ELEMENTS)]
     #endregion
@@ -76,6 +88,53 @@ public class GameController : MonoBehaviour
     [Tooltip("The volume of the count down sound")]
     [SerializeField]
     private float countDownSoundVolume = 1.0f;
+    #endregion
+
+    #region Start Sound
+    [Tooltip("The sound made when it says go")]
+    [SerializeField]
+    private AudioClip startSound;
+
+    [Range(0.0f, 1.0f)]
+    [Tooltip("The volume of the start sound")]
+    [SerializeField]
+    private float startSoundVolume = 1.0f;
+    #endregion
+
+    #region Start Sound
+    [Tooltip("The sound made when the game ends")]
+    [SerializeField]
+    private AudioClip endSound;
+
+    [Range(0.0f, 1.0f)]
+    [Tooltip("The volume of the end sound")]
+    [SerializeField]
+    private float endSoundVolume = 1.0f;
+    #endregion
+
+    [Header("Pickup Sounds")]
+    #region Pickup Sounds
+    #region Good Pickup Sound
+    [Tooltip("The sound made when picking up a good apple")]
+    [SerializeField]
+    private AudioClip goodPickupSound;
+
+    [Range(0.0f, 1.0f)]
+    [Tooltip("The volume of the good pickup sound")]
+    [SerializeField]
+    private float goodPickupSoundVolume = 1.0f;
+    #endregion
+
+    #region Countdown Sound
+    [Tooltip("The sound made when picking up a bad apple")]
+    [SerializeField]
+    private AudioClip badPickupSound;
+
+    [Range(0.0f, 1.0f)]
+    [Tooltip("The volume of the good pickup sound")]
+    [SerializeField]
+    private float badPickupSoundVolume = 1.0f;
+    #endregion
     #endregion
     #endregion
     #endregion
@@ -129,10 +188,22 @@ public class GameController : MonoBehaviour
         var actualIncrement = ComboModifier(increment);
         currentPointTotal += actualIncrement;
 
+
+        // Spawns text at score location
         var text = Instantiate(scoreText, location, Quaternion.identity);
         text.GetComponent<ScoreIncrementText>().InitializeScore(actualIncrement);
-
         UIManager.UpdateScore(currentPointTotal);
+
+        if(increment > 0)
+        {
+            PlaySound(goodPickupSound, goodPickupSoundVolume);
+            goodApples++;
+        }
+        else
+        {
+            PlaySound(badPickupSound, badPickupSoundVolume);
+            badApples++;
+        }
     }
 
     private int ComboModifier(int increment)
@@ -153,7 +224,23 @@ public class GameController : MonoBehaviour
     public void UpdateSceneCombo()
     {
         currentCombo++;
+
+        if(highestComboReached < currentCombo)
+        {
+            highestComboReached = currentCombo;
+        }
+
         UIManager.UpdateCombo(currentCombo);
+    }
+
+    public static void MissedGoodApple()
+    {
+        instance.UpdateGoodApplesMissed();
+    }
+
+    public void UpdateGoodApplesMissed()
+    {
+        ++goodApplesMissed;
     }
 
     public static void ResetCombo()
@@ -178,11 +265,22 @@ public class GameController : MonoBehaviour
     {
         int t = timeBeforeStart;
 
+        yield return new WaitForSeconds(0.25f);
+
         do
         {
             UIManager.UpdateCountdown(t);
 
-            if(t != 0) yield return new WaitForSeconds(1);
+            if(t != 0)
+            {
+                PlaySound(countDownSound, countDownSoundVolume);
+            }
+            else
+            {
+                PlaySound(startSound, startSoundVolume);
+            }
+
+            if (t != 0) yield return new WaitForSeconds(1);
         }
         while (t-- > 0);
 
@@ -194,6 +292,7 @@ public class GameController : MonoBehaviour
     /// </summary>
     private void StartGame()
     {
+        MusicHandler.StartMusic();
         StartCoroutine(GameTimer());
         StartSpawningApples();
     }
@@ -216,7 +315,7 @@ public class GameController : MonoBehaviour
         }
         while (t > 0);
 
-        EndGame();
+        yield return EndGame();
     }
     #endregion
 
@@ -238,11 +337,41 @@ public class GameController : MonoBehaviour
     /// <summary>
     /// Displays end message, stops apples from spawning, and outputs the game data.
     /// </summary>
-    private void EndGame()
+    private IEnumerator EndGame()
     {
-        UIManager.DisplayEndMessage();
         StopSpawningApples();
+
+        // Waits for game to fully complete
+        yield return WaitForApplesToDrop();
+        yield return new WaitForSeconds(timeBeforeEnd);
+
+        // Displays all data
+        UIManager.DisplayEndMessage();
+        DisplayGameData();
         OutputData();
+    }
+
+    private IEnumerator WaitForApplesToDrop()
+    {
+        var goodApples = GameObject.FindGameObjectsWithTag("Good").ToList();
+        var badApples = GameObject.FindGameObjectsWithTag("Bad").ToList();
+
+        while (goodApples.Count != 0 || badApples.Count != 0)
+        {
+            goodApples.RemoveAll(item => item == null);
+            badApples.RemoveAll(item => item == null);
+
+
+            yield return new WaitForFixedUpdate();
+        }
+    }
+
+    private void DisplayGameData()
+    {
+        UIManager.UpdateAppleCount(goodApples, badApples);
+        UIManager.UpdateApplesMissedCount(goodApplesMissed);
+        UIManager.UpdateHighestCombo(highestComboReached);
+        UIManager.UpdateScore(currentPointTotal);
     }
 
     /// <summary>
@@ -251,7 +380,24 @@ public class GameController : MonoBehaviour
     private void OutputData()
     {
         // currentPointTotal;
+        // goodApples
+        // badAPples
+        // highestComboReached
+        // pointTotal
     }
-    #endregion
-    #endregion
+
+    public void ExitGame()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
+        Application.Quit();
+    }
+
+    public void PlayAgain()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+#endregion
+#endregion
 }

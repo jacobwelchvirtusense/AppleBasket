@@ -123,7 +123,7 @@ public class Apple : MonoBehaviour
     {
         minFallSpeedSquared = minFallSpeed * minFallSpeed;
         maxFallSpeedSquared = maxFallSpeed * maxFallSpeed;
-        currentMaxSpeedSquared = CustomRandom.RandomGeneration(minFallSpeedSquared, maxFallSpeedSquared, fallSpeedGenerationType) * speedMod;
+        currentMaxSpeedSquared = CustomRandom.RandomGeneration(minFallSpeedSquared, maxFallSpeedSquared, fallSpeedGenerationType) * speedMod * BasketMovement.SpeedGameMod();
         currentMaxSpeed = Mathf.Sqrt(currentMaxSpeedSquared);
 
         accelerationSpeed *= speedMod;
@@ -141,6 +141,7 @@ public class Apple : MonoBehaviour
             if(points > 0)
             {
                 ResetCombo();
+                MissedGoodApple();
             }
 
             Destroy(gameObject);

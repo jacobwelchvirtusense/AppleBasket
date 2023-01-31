@@ -43,6 +43,28 @@ public class UIManager : MonoBehaviour
 
     private static Image TimerBar1;
     private static Image TimerBar2;
+
+    
+    [Tooltip("The end game display for the amount of good apples caught")]
+    [SerializeField] private EndGameDataDisplay goodApplesEndGame;
+    
+    [Tooltip("The end game display for the amount of bad apples caught")]
+    [SerializeField] private EndGameDataDisplay badApplesEndGame;
+
+    [Tooltip("The end game display for the amount of good apples missed")]
+    [SerializeField] private EndGameDataDisplay goodApplesMissedEndGame;
+
+    [Tooltip("The end game display for the amount of score the player earned")]
+    [SerializeField] private EndGameDataDisplay scoreEndGame;
+    
+    [Tooltip("The end game display for the highest combo reached")]
+    [SerializeField] private EndGameDataDisplay highestComboEndGame;
+
+    private static EndGameDataDisplay GoodApplesEndGame;
+    private static EndGameDataDisplay BadApplesEndGame;
+    private static EndGameDataDisplay GoodApplesMissedEndGame;
+    private static EndGameDataDisplay ScoreEndGame;
+    private static EndGameDataDisplay HighestComboEndGame;
     #endregion
 
     #region Functions
@@ -78,13 +100,25 @@ public class UIManager : MonoBehaviour
 
         #region End Message
         EndMessage = endMessage;
-        EndMessage.gameObject.SetActive(false);
         #endregion
 
         #region Combo
         Combo = combo;
         UpdateCombo(0);
         #endregion
+
+        #region End Game Data
+        GoodApplesEndGame = goodApplesEndGame;
+        BadApplesEndGame = badApplesEndGame;
+        GoodApplesMissedEndGame = goodApplesMissedEndGame;
+        ScoreEndGame = scoreEndGame;
+        HighestComboEndGame = highestComboEndGame;
+        #endregion
+    }
+
+    private void Start()
+    {
+        EndMessage.gameObject.SetActive(false);
     }
     #endregion
 
@@ -98,9 +132,9 @@ public class UIManager : MonoBehaviour
         if (InstanceDoesntExist() || IsntValid(CountDown)) return;
 
         // Updates the countdown UI 
-        //CountDown.text = newCount.ToString();
+        CountDown.text = newCount.ToString();
 
-        CountDown.gameObject.SetActive(newCount != 0);
+        //CountDown.gameObject.SetActive(newCount != 0);
     }
 
     /// <summary>
@@ -113,6 +147,40 @@ public class UIManager : MonoBehaviour
 
         // Updates the score UI 
         Score.text = newScore.ToString();
+        UpdateScoreEndGame(newScore);
+    }
+
+    /// <summary>
+    /// Updates the displayed score for at the end of the game.
+    /// </summary>
+    /// <param name="newScore">The new score the player has.</param>
+    private static void UpdateScoreEndGame(int newScore)
+    {
+        if (IsntValid(ScoreEndGame)) return;
+        ScoreEndGame.UpdateText(newScore.ToString());
+    }
+
+    /// <summary>
+    /// Updates the count of apples displayed at the end of the game.
+    /// </summary>
+    /// <param name="goodApples">The amount of good apples.</param>
+    /// <param name="badApples">The amount of bad apples.</param>
+    public static void UpdateAppleCount(int goodApples, int badApples)
+    {
+        if (InstanceDoesntExist() || IsntValid(GoodApplesEndGame) || IsntValid(BadApplesEndGame)) return;
+        GoodApplesEndGame.UpdateText(goodApples.ToString());
+        BadApplesEndGame.UpdateText(badApples.ToString());
+    }
+
+    /// <summary>
+    /// Updates the count of apples displayed at the end of the game.
+    /// </summary>
+    /// <param name="goodApples">The amount of good apples.</param>
+    /// <param name="badApples">The amount of bad apples.</param>
+    public static void UpdateApplesMissedCount(int goodApplesMissed)
+    {
+        if (InstanceDoesntExist() || IsntValid(GoodApplesMissedEndGame)) return;
+        GoodApplesMissedEndGame.UpdateText(goodApplesMissed.ToString());
     }
 
     #region Timer
@@ -172,11 +240,25 @@ public class UIManager : MonoBehaviour
     #endregion
 
     #region Combo
+    /// <summary>
+    /// Updates the displayed combo during the game.
+    /// </summary>
+    /// <param name="newCombo">The new combo of the player.</param>
     public static void UpdateCombo(int newCombo)
     {
         if (InstanceDoesntExist() || IsntValid(Combo)) return;
 
         Combo.text = "x" + newCombo.ToString();
+    }
+
+    /// <summary>
+    /// Updates the highest displayed combo at the end of the game.
+    /// </summary>
+    /// <param name="highestCombo">The highest combo to display.</param>
+    public static void UpdateHighestCombo(int highestCombo)
+    {
+        if (IsntValid(HighestComboEndGame)) return;
+        HighestComboEndGame.UpdateText(highestCombo.ToString());
     }
     #endregion
 
