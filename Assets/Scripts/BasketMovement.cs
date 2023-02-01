@@ -93,7 +93,7 @@ public class BasketMovement : MonoBehaviour
     private JointType[] leanJoints = new JointType[]
     {
         JointType.SpineBase,
-        JointType.SpineMid
+        JointType.SpineShoulder
     };
 
     private JointType[] moveJoints = new JointType[]
@@ -249,6 +249,7 @@ public class BasketMovement : MonoBehaviour
             default:
             case MovementType.LEAN:
                 var dir = ((Vector2)(GetVector3FromJoint(body.Joints[leanJoints[0]]) - GetVector3FromJoint(body.Joints[leanJoints[1]])));
+                dir.x -= 0.2f;
 
                 print("dir: " + dir);
 
