@@ -7,6 +7,7 @@
  * 
  * Description: Handles the spawning of apples over variable rates.
 *********************************/
+using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
@@ -36,7 +37,7 @@ public class AppleSpawner : MonoBehaviour
     [Range(0.0f, 1.0f)]
     [Tooltip("The rate that good apples should be spawning")]
     [SerializeField] private float goodAppleRate = 0.8f;
-    private enum AppleSpawnRateDifficulty { SLOW, MEDIUM, FAST }
+    public enum AppleSpawnRateDifficulty { SLOW, MEDIUM, FAST }
 
     private enum AppleSpeedDificulty { SLOW, MEDIUM, FAST }
 
@@ -86,6 +87,14 @@ public class AppleSpawner : MonoBehaviour
     private void Awake()
     {
         appleSpawner = this;
+    }
+    #endregion
+
+    #region Settings
+    public static void UpdateGameDifficulty(int difficulty)
+    {
+        appleSpawner.appleSpawnRateDifficulty = (AppleSpawnRateDifficulty)difficulty;
+        appleSpawner.appleSpeedDifficulty = (AppleSpeedDificulty)difficulty;
     }
     #endregion
 

@@ -39,15 +39,15 @@ public class BasketMovement : MonoBehaviour
     public enum MovementType { LEAN, CATCH, MOVE }
 
     [Tooltip("The current type of input to use for moving the basket")]
-    [field:SerializeField] public MovementType currentMovementType { get; private set; } = MovementType.LEAN;
+    [field:SerializeField] private MovementType currentMovementType { get; set; } = MovementType.LEAN;
 
     [Tooltip("The modifiers based on the selected movement type")]
-    [field:SerializeField] public float[] movementTypeSpeedModifier { get; private set; } = new float[3];
+    [field:SerializeField] private float[] movementTypeSpeedModifier { get; set; } = new float[3];
 
     /// <summary>
     /// The types of difficulty for the amount of movement needed by the user.
     /// </summary>
-    private enum MovementDifficulty { EASY, MEDIUM, HARD }
+    public enum MovementDifficulty { EASY, MEDIUM, HARD }
 
     [Tooltip("The current type of difficulty needed for moving the basket")]
     [SerializeField] private MovementDifficulty currentMovementDiffculty = MovementDifficulty.MEDIUM;
@@ -103,8 +103,8 @@ public class BasketMovement : MonoBehaviour
 
     private JointType[] handJoints = new JointType[]
     {
-        JointType.HandLeft,
-        JointType.HandRight
+        JointType.WristLeft,
+        JointType.WristRight
     };
     #endregion
     #endregion
@@ -128,6 +128,18 @@ public class BasketMovement : MonoBehaviour
         bodyManager = FindObjectOfType<BodySourceManager>();
         boxCollider = GetComponent<BoxCollider2D>();
         appleDetectionLight = GetComponentInChildren<Light2D>();
+    }
+    #endregion
+
+    #region Settings
+    public static void SetMovementType(int movementType)
+    {
+        instance.currentMovementType = (MovementType)movementType;
+    }
+
+    public static void SetMovementDifficulty(int difficulty)
+    {
+        instance.currentMovementDiffculty = (MovementDifficulty)difficulty;
     }
     #endregion
 
@@ -239,7 +251,7 @@ public class BasketMovement : MonoBehaviour
 
             #region Catch Mode
             case MovementType.CATCH:
-                var centerXCatch = body.Joints[JointType.SpineMid].Position.X;
+                var centerXCatch = body.Joints[JointType.SpineMid].Position.X-0.1f;
                 targetPos = CalculateCatchTargetPosition(body.Joints[handJoints[0]].Position.X - centerXCatch, body.Joints[handJoints[1]].Position.X) - centerXCatch;
                 movementSmoothing = catchMovementSmoothing;
                 break;

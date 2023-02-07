@@ -15,12 +15,14 @@ public class MusicHandler : MonoBehaviour
 {
     #region Fields
     private static AudioSource audioSource;
+    private static MusicHandler instance;
     #endregion
 
     #region Functions
     private void Awake()
     {
         audioSource = GetComponent<AudioSource>();
+        instance = this;
     }
 
     /// <summary>
@@ -28,7 +30,14 @@ public class MusicHandler : MonoBehaviour
     /// </summary>
     public static void StartMusic()
     {
-        if(audioSource != null) audioSource.Play();
+        instance.StartCoroutine(instance.WaitToStartMusic());
+    }
+
+    private IEnumerator WaitToStartMusic()
+    {
+        yield return new WaitForSeconds(0.05f);
+        if (audioSource != null) audioSource.Play();
+
     }
 
     /// <summary>

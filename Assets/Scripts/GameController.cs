@@ -33,8 +33,6 @@ public class GameController : MonoBehaviour
     private int badApples = 0;
     private int goodApplesMissed = 0;
 
-    private float comboModifier = 0.25f;
-
     /// <summary>
     /// The scene instance of the GameController.
     /// </summary>
@@ -42,6 +40,9 @@ public class GameController : MonoBehaviour
 
     [Tooltip("The text prefab for increments to score")]
     [SerializeField] private GameObject scoreText;
+
+    [Tooltip("The rate of points to increase by per combo")]
+    [SerializeField] private float comboModifier = 0.25f;
 
     #region Timer
     [Header("Timer")]
@@ -55,7 +56,7 @@ public class GameController : MonoBehaviour
 
     [Range(0.0f, 1.0f)]
     [Tooltip("The current lerp between the min and max timer amounts")]
-    [SerializeField] private float currentTimer = 0.5f;
+    public float currentTimer = 0.5f;
 
     [Space(SPACE_BETWEEN_EDITOR_ELEMENTS)]
     #endregion
@@ -152,22 +153,24 @@ public class GameController : MonoBehaviour
     }
 
     /// <summary>
-    /// Starts the countdown to begin the game.
-    /// </summary>
-    private void Start()
-    {
-        UIManager.InitializeTimer(Mathf.RoundToInt(Mathf.Lerp(minTimerAmount, maxTimerAmount, currentTimer)));
-        StartCoroutine(CountdownLoop());
-    }
-
-    /// <summary>
     /// Initializes any components needed.
     /// </summary>
     private void InitializeComponents()
     {
         audioSource = GetComponent<AudioSource>();
     }
+
+    public void StartGameCountdown()
+    {
+        UIManager.InitializeTimer(Mathf.RoundToInt(Mathf.Lerp(minTimerAmount, maxTimerAmount, currentTimer)));
+        StartCoroutine(CountdownLoop());
+    }
     #endregion
+
+    public static void UpdateTimer(float timerLerp)
+    {
+        instance.currentTimer = timerLerp;
+    }
 
     #region Updating Score
     /// <summary>
@@ -265,6 +268,8 @@ public class GameController : MonoBehaviour
     {
         int t = timeBeforeStart;
 
+        UIManager.UpdateCountdown(t);
+
         yield return new WaitForSeconds(0.25f);
 
         do
@@ -305,7 +310,7 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     private IEnumerator GameTimer()
     {
-        float t = Mathf.RoundToInt(Mathf.Lerp(minTimerAmount, maxTimerAmount, currentTimer));
+        float t = GetTimerAmountHelper();
 
         do
         {
@@ -316,6 +321,16 @@ public class GameController : MonoBehaviour
         while (t > 0);
 
         yield return EndGame();
+    }
+
+    public static int GetTimerAmount()
+    {
+        return instance.GetTimerAmountHelper();
+    }
+
+    private int GetTimerAmountHelper()
+    {
+        return Mathf.RoundToInt(Mathf.Lerp(minTimerAmount, maxTimerAmount, currentTimer));
     }
     #endregion
 

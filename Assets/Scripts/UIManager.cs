@@ -85,7 +85,7 @@ public class UIManager : MonoBehaviour
     {
         #region Countdown
         CountDown = countDown;
-        UpdateCountdown(0);
+        countDown.gameObject.SetActive(false);
         #endregion
 
         #region Score
@@ -133,8 +133,7 @@ public class UIManager : MonoBehaviour
 
         // Updates the countdown UI 
         CountDown.text = newCount.ToString();
-
-        //CountDown.gameObject.SetActive(newCount != 0);
+        CountDown.gameObject.SetActive(true);
     }
 
     /// <summary>
@@ -198,19 +197,24 @@ public class UIManager : MonoBehaviour
     {
         if (InstanceDoesntExist() || IsntValid(TimerUI)) return;
 
+        // Updates the timer UI 
+        TimerUI.text = GetTimerValue(newTime);
+        TimerUI.gameObject.SetActive(newTime != 0);
+
+        UpdateTimerBars(newTime);
+    }
+
+    public static string GetTimerValue(float newTime)
+    {
         var seconds = (int)newTime;
         var minutes = seconds / 60;
         var leftOverSeconds = (seconds - (minutes * 60));
         string secondsDisplayed = "";
 
-        if(leftOverSeconds < 10) secondsDisplayed += "0";
+        if (leftOverSeconds < 10) secondsDisplayed += "0";
         secondsDisplayed += leftOverSeconds;
 
-        // Updates the timer UI 
-        TimerUI.text = minutes.ToString() + ":" + secondsDisplayed;
-        TimerUI.gameObject.SetActive(newTime != 0);
-
-        UpdateTimerBars(newTime);
+        return minutes.ToString() + ":" + secondsDisplayed;
     }
 
     private static void UpdateTimerBars(float newTime)
