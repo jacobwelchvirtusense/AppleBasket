@@ -15,10 +15,11 @@ using UnityEngine;
 public class EndGameDataDisplay : MonoBehaviour
 {
     #region Fields
-    [Tooltip("The number of dots to displace the score by")]
+    /*[Tooltip("The number of dots to displace the score by")]
     [SerializeField] private int numberOfDots = 10;
 
     private const int numberOfDotsToChar = 2;
+    */
 
     private TextMeshProUGUI textMeshProUGUI;
 
@@ -29,13 +30,16 @@ public class EndGameDataDisplay : MonoBehaviour
     private void Awake()
     {
         textMeshProUGUI = GetComponent<TextMeshProUGUI>();
-        startingText = textMeshProUGUI.text;
+        //startingText = textMeshProUGUI.text;
     }
 
     public void UpdateText(string displayText)
     {
         if (textMeshProUGUI == null) return;
 
+        var dots = "";
+
+        /*
         var numberOfCharacters = displayText.Length;
         numberOfDots -= numberOfDotsToChar * numberOfCharacters;
         string dots = "";
@@ -43,7 +47,7 @@ public class EndGameDataDisplay : MonoBehaviour
         for(int i = 0; i < numberOfDots; i++)
         {
             dots += ".";
-        }
+        }*/
 
         textMeshProUGUI.text = startingText + dots + displayText;
     }

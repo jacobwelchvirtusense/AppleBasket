@@ -52,7 +52,6 @@ public class Apple : MonoBehaviour
     /// </summary>
     private float currentMaxSpeedSquared = 5.0f;
     private float currentMaxSpeed = 5.0f;
-    private bool hasNotClampedSpeed = true; // Used to check if the speed has been clamp to its max yet
 
     private float speedMod = 0.0f;
 
@@ -154,10 +153,9 @@ public class Apple : MonoBehaviour
         }
 
         // Clamps Speed
-        else if (hasNotClampedSpeed)
+        else
         {
-            rigidbody2d.velocity = rigidbody2d.velocity.normalized * currentMaxSpeed;
-            hasNotClampedSpeed = false;
+            rigidbody2d.velocity = rigidbody2d.velocity.normalized * currentMaxSpeed * InfiniteSpeedMod;
         }
     }
 

@@ -30,6 +30,8 @@ public class MusicHandler : MonoBehaviour
     /// </summary>
     public static void StartMusic()
     {
+        if (instance == null) return;
+
         instance.StartCoroutine(instance.WaitToStartMusic());
     }
 

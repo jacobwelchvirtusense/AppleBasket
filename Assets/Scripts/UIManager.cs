@@ -186,7 +186,16 @@ public class UIManager : MonoBehaviour
     public static void InitializeTimer(int startingTime)
     {
         timerStartingAmount = startingTime;
-        UpdateTimer(startingTime);
+
+        if(startingTime != -1) UpdateTimer(startingTime);
+        else
+        {
+            TimerUI.fontSize *= 2.0f;
+            TimerUI.text = "\u221E";
+            var pos = TimerUI.transform.position;
+            pos.y += 6.0f;
+            TimerUI.transform.position = pos;
+        }
     }
 
     /// <summary>

@@ -126,7 +126,8 @@ public class AppleSpawner : MonoBehaviour
         while (true)
         {
             var difficultyMod = spawnRateModifiers[(int)appleSpawnRateDifficulty];
-            yield return new WaitForSeconds(CustomRandom.RandomGeneration(minTimeBetweenSpawns, maxTimeBetweenSpawns, timeBetweenSpawnsGenerationType) * difficultyMod / BasketMovement.SpeedGameMod());
+            var randomTiming = CustomRandom.RandomGeneration(minTimeBetweenSpawns, maxTimeBetweenSpawns, timeBetweenSpawnsGenerationType);
+            yield return new WaitForSeconds(randomTiming * difficultyMod / BasketMovement.SpeedGameMod() / GameController.InfiniteSpeedMod);
             SpawnApple();
         }
     }

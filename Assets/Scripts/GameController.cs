@@ -46,17 +46,10 @@ public class GameController : MonoBehaviour
 
     #region Timer
     [Header("Timer")]
-    [Range(0, 300)]
     [Tooltip("The minimum value for the timer in seconds")]
-    [SerializeField] private int minTimerAmount = 30;
+    [SerializeField] private int[] timers = new int[] { 30, 60, 120 };
 
-    [Range(0, 300)]
-    [Tooltip("The maximum value for the timer in seconds")]
-    [SerializeField] private int maxTimerAmount = 120;
-
-    [Range(0.0f, 1.0f)]
-    [Tooltip("The current lerp between the min and max timer amounts")]
-    public float currentTimer = 0.5f;
+    private int currentTimer = 0;
 
     [Space(SPACE_BETWEEN_EDITOR_ELEMENTS)]
     #endregion
@@ -71,6 +64,17 @@ public class GameController : MonoBehaviour
     [SerializeField] private float timeBeforeEnd = 1.0f;
 
     [Space(SPACE_BETWEEN_EDITOR_ELEMENTS)]
+    #endregion
+
+    #region Infinite
+    [Header("Infinite")]
+    [Tooltip("The rate of points to increase by per combo")]
+    [SerializeField] private float speedModIncreaseRate = 0.25f;
+    [HideInInspector] public float speedMod = 1f;
+    [Tooltip("The rate of points to increase by per combo")]
+    [SerializeField] private int allowedMisses = 3;
+
+    public static float InfiniteSpeedMod { get => instance.speedMod; }
     #endregion
 
     #region Sound
@@ -162,14 +166,16 @@ public class GameController : MonoBehaviour
 
     public void StartGameCountdown()
     {
-        UIManager.InitializeTimer(Mathf.RoundToInt(Mathf.Lerp(minTimerAmount, maxTimerAmount, currentTimer)));
+        //var timer = isInfinite ? -1 : Mathf.RoundToInt(Mathf.Lerp(minTimerAmount, maxTimerAmount, currentTimer));
+
+        UIManager.InitializeTimer(GetTimerAmount());
         StartCoroutine(CountdownLoop());
     }
     #endregion
 
-    public static void UpdateTimer(float timerLerp)
+    public static void UpdateTimer(int newTimerSlot)
     {
-        instance.currentTimer = timerLerp;
+        instance.currentTimer = newTimerSlot;
     }
 
     #region Updating Score
@@ -298,7 +304,16 @@ public class GameController : MonoBehaviour
     private void StartGame()
     {
         MusicHandler.StartMusic();
-        StartCoroutine(GameTimer());
+
+        if (IsInfinite())
+        {
+            StartCoroutine(InfiniteRoutine());
+        }
+        else
+        {
+            StartCoroutine(GameTimer());
+        }
+
         StartSpawningApples();
     }
     #endregion
@@ -330,7 +345,29 @@ public class GameController : MonoBehaviour
 
     private int GetTimerAmountHelper()
     {
-        return Mathf.RoundToInt(Mathf.Lerp(minTimerAmount, maxTimerAmount, currentTimer));
+        if (currentTimer == 3) return -1;
+
+        return timers[currentTimer];
+        //return Mathf.RoundToInt(Mathf.Lerp(minTimerAmount, maxTimerAmount, currentTimer));
+    }
+    #endregion
+
+    #region Infinite
+    private IEnumerator InfiniteRoutine()
+    {
+        while (badApples+goodApplesMissed < allowedMisses)
+        {
+            yield return new WaitForFixedUpdate();
+
+            speedMod += Time.fixedDeltaTime * speedModIncreaseRate;
+        }
+
+        yield return EndGame();
+    }
+
+    public static bool IsInfinite()
+    {
+        return instance.GetTimerAmountHelper() == -1;
     }
     #endregion
 

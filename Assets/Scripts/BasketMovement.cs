@@ -36,7 +36,7 @@ public class BasketMovement : MonoBehaviour
     /// <summary>
     /// The types of input for moving the basket.
     /// </summary>
-    public enum MovementType { LEAN, CATCH, MOVE }
+    public enum MovementType { MOVE, LEAN, CATCH }
 
     [Tooltip("The current type of input to use for moving the basket")]
     [field:SerializeField] private MovementType currentMovementType { get; set; } = MovementType.LEAN;
