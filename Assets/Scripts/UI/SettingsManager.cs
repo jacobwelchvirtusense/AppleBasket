@@ -34,7 +34,7 @@ public class SettingsManager : MonoBehaviour
     /// <summary>
     /// The current type of input to be used in the game.
     /// </summary>
-    private static int inputType = 0;
+    public static int inputType = 0;
 
     /// <summary>
     /// The current difficulty setting of the movement.

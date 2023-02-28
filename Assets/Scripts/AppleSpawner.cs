@@ -165,5 +165,38 @@ public class AppleSpawner : MonoBehaviour
         apple.GetComponent<Apple>().InitializeSpeedMod(appleSpeedModifiers[(int)appleSpeedDifficulty]);
     }
     #endregion
+
+    #region Tutorial Spawning
+    public static void SpawnSideApples()
+    {
+        var pos = appleSpawner.transform.position;
+        pos.y = -4.5f;
+        pos.x = -appleSpawner.maxSpawnDist;
+
+        var apple = Instantiate(appleSpawner.goodApple, pos, Quaternion.identity);
+        apple.GetComponent<Apple>().IsLockedInPlace = true;
+
+        pos.x = appleSpawner.maxSpawnDist;
+
+        apple = Instantiate(appleSpawner.goodApple, pos, Quaternion.identity);
+        apple.GetComponent<Apple>().IsLockedInPlace = true;
+    }
+
+    public static void SpawnGoodApple()
+    {
+        appleSpawner.SpawnAppleCenter(appleSpawner.goodApple);
+    }
+
+    public static void SpawnBadApple()
+    {
+        appleSpawner.SpawnAppleCenter(appleSpawner.badApple);
+    }
+
+    private void SpawnAppleCenter(GameObject appleToSpawn)
+    {
+        var apple = Instantiate(appleToSpawn, transform.position, Quaternion.identity);
+        apple.GetComponent<Apple>().InitializeSpeedMod(appleSpeedModifiers[(int)appleSpeedDifficulty]);
+    }
+    #endregion
     #endregion
 }

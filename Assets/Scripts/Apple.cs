@@ -58,6 +58,11 @@ public class Apple : MonoBehaviour
     [Range(0.0f, 50.0f)]
     [Tooltip("The rate of speed increase for the apple")]
     [SerializeField] private float accelerationSpeed = 9.8f;
+
+    /// <summary>
+    /// Holds true if this apple should be locked in place.
+    /// </summary>
+    [HideInInspector] public bool IsLockedInPlace = false;
     #endregion
 
     #region Rotation
@@ -134,6 +139,11 @@ public class Apple : MonoBehaviour
     /// </summary>
     private void FixedUpdate()
     {
+        if (IsLockedInPlace)
+        {
+            return;
+        }
+
         // Removes objects when they fall too low
         if (transform.position.y < offscreenHeight)
         {

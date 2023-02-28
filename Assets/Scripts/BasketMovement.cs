@@ -36,7 +36,7 @@ public class BasketMovement : MonoBehaviour
     /// <summary>
     /// The types of input for moving the basket.
     /// </summary>
-    public enum MovementType { MOVE, LEAN, CATCH }
+    public enum MovementType { MOVE, LEAN, CATCH, NONE }
 
     [Tooltip("The current type of input to use for moving the basket")]
     [field:SerializeField] private MovementType currentMovementType { get; set; } = MovementType.LEAN;
@@ -65,7 +65,7 @@ public class BasketMovement : MonoBehaviour
 
     #region Catch Mode
     [Header("Catch Mode")]
-    [Range(0.0f, 10.0f)]
+    [Range(0.0f, 50.0f)]
     [Tooltip("The max hand positions to check for catch movement")]
     [SerializeField] private float[] maxCatchPos = new float[] { 0.5f, 1.0f, 1.5f };
 
@@ -251,27 +251,41 @@ public class BasketMovement : MonoBehaviour
 
             #region Catch Mode
             case MovementType.CATCH:
-                var centerXCatch = body.Joints[JointType.SpineMid].Position.X-0.1f;
-                targetPos = CalculateCatchTargetPosition(body.Joints[handJoints[0]].Position.X - centerXCatch, body.Joints[handJoints[1]].Position.X) - centerXCatch;
+                
+                Vector2 centerXCatch = new Vector2(body.Joints[JointType.SpineBase].Position.X+0.5f, body.Joints[JointType.SpineBase].Position.Z);
+                var handVector1 = GetVector3FromJoint(body.Joints[handJoints[0]]);
+                Vector2 handDir1 = (new Vector2(handVector1.x, handVector1.z) - centerXCatch);
+                var handangle1 = Vector2.Angle(handDir1, Vector2.up) * Mathf.Sign(handVector1.x);
+                
+                print("dir1: " + handDir1);
+                print("Angle1: " + handangle1);
+
+                var handVector2 = GetVector3FromJoint(body.Joints[handJoints[1]]);
+                Vector2 handDir2 = (new Vector2(handVector2.x, handVector2.z) - centerXCatch);
+                var handangle2 = Vector2.Angle(handDir2, Vector2.up) * Mathf.Sign(handVector2.x);
+
+                print("dir2: " + handDir2);
+                print("Angle2: " + handangle2);
+
+                targetPos = CalculateCatchTargetPosition((handangle1+handangle2)/2);
+                //targetPos = CalculateCatchTargetPosition(body.Joints[handJoints[0]].Position.X - centerXCatch, body.Joints[handJoints[1]].Position.X) - centerXCatch;
                 movementSmoothing = catchMovementSmoothing;
                 break;
             #endregion
 
             #region Lean Mode
-            default:
             case MovementType.LEAN:
                 var dir = ((Vector2)(GetVector3FromJoint(body.Joints[leanJoints[0]]) - GetVector3FromJoint(body.Joints[leanJoints[1]])));
                 dir.x -= 0.2f;
 
-                print("dir: " + dir);
-
                 var angle = (180 - Vector2.Angle(dir, Vector2.up)) * -Mathf.Sign(dir.x);
-                print("angle: " + angle);
-
                 targetPos = CalculateLeanTargetPosition(angle);
                 movementSmoothing = leanMovementSmoothing;
                 break;
             #endregion
+
+            default:
+                break;
         }
 
         UpdateBasketPosition(targetPos, movementSmoothing);
@@ -321,6 +335,21 @@ public class BasketMovement : MonoBehaviour
     /// <param name="hand1Pos">The position of the users left hand.</param>
     /// <param name="hand2Pos">The position of the users right hand.</param>
     /// <returns></returns>
+    private float CalculateCatchTargetPosition(float angle)
+    {
+        var difficulty = (int)currentMovementDiffculty;
+        var targetLerp = Mathf.InverseLerp(-maxCatchPos[difficulty], maxCatchPos[difficulty], angle);
+
+        return targetLerp;
+    }
+
+    /*
+    /// <summary>
+    /// Calculates the current lerp based on the position of the users hands.
+    /// </summary>
+    /// <param name="hand1Pos">The position of the users left hand.</param>
+    /// <param name="hand2Pos">The position of the users right hand.</param>
+    /// <returns></returns>
     private float CalculateCatchTargetPosition(float hand1Pos, float hand2Pos)
     {
         var difficulty = (int)currentMovementDiffculty;
@@ -329,7 +358,7 @@ public class BasketMovement : MonoBehaviour
         var targetPositionLerp = (targetPosition1 + targetPosition2) / 2;
 
         return targetPositionLerp;
-    }
+    }*/
     #endregion
 
     /// <summary>
@@ -366,6 +395,15 @@ public class BasketMovement : MonoBehaviour
     public static float SpeedGameMod()
     {
         return instance.movementTypeSpeedModifier[(int)instance.currentMovementType];
+    }
+
+    public static void LockMovement()
+    {
+        Vector3 pos = instance.transform.position;
+        pos.x = 0;
+
+        instance.transform.position = pos;
+        instance.currentMovementType = MovementType.NONE;
     }
     #endregion
 }

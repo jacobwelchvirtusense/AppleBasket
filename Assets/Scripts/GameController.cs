@@ -36,7 +36,7 @@ public class GameController : MonoBehaviour
     /// <summary>
     /// The scene instance of the GameController.
     /// </summary>
-    private static GameController instance;
+    public static GameController instance;
 
     [Tooltip("The text prefab for increments to score")]
     [SerializeField] private GameObject scoreText;
@@ -55,10 +55,6 @@ public class GameController : MonoBehaviour
     #endregion
 
     #region Time Before
-    [Range(0, 10)]
-    [Tooltip("The count down time before starting")]
-    [SerializeField] private int timeBeforeStart = 3;
-
     [Range(0.0f, 5.0f)]
     [Tooltip("The count down time before starting")]
     [SerializeField] private float timeBeforeEnd = 1.0f;
@@ -84,29 +80,7 @@ public class GameController : MonoBehaviour
     private AudioSource audioSource;
 
     [Header("Sound")]
-    #region Countdown Sound
-    [Tooltip("The sound made with each change of the countdown")]
-    [SerializeField]
-    private AudioClip countDownSound;
-
-    [Range(0.0f, 1.0f)]
-    [Tooltip("The volume of the count down sound")]
-    [SerializeField]
-    private float countDownSoundVolume = 1.0f;
-    #endregion
-
-    #region Start Sound
-    [Tooltip("The sound made when it says go")]
-    [SerializeField]
-    private AudioClip startSound;
-
-    [Range(0.0f, 1.0f)]
-    [Tooltip("The volume of the start sound")]
-    [SerializeField]
-    private float startSoundVolume = 1.0f;
-    #endregion
-
-    #region Start Sound
+    #region End Sound
     [Tooltip("The sound made when the game ends")]
     [SerializeField]
     private AudioClip endSound;
@@ -272,28 +246,7 @@ public class GameController : MonoBehaviour
     /// <returns></returns>
     private IEnumerator CountdownLoop()
     {
-        int t = timeBeforeStart;
-
-        UIManager.UpdateCountdown(t);
-
-        yield return new WaitForSeconds(0.25f);
-
-        do
-        {
-            UIManager.UpdateCountdown(t);
-
-            if(t != 0)
-            {
-                PlaySound(countDownSound, countDownSoundVolume);
-            }
-            else
-            {
-                PlaySound(startSound, startSoundVolume);
-            }
-
-            if (t != 0) yield return new WaitForSeconds(1);
-        }
-        while (t-- > 0);
+        yield return Countdown.CountdownLoop();
 
         StartGame();
     }
