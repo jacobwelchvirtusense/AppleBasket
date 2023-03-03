@@ -875,7 +875,7 @@ GameObject:
   - component: {fileID: 712465517}
   m_Layer: 0
   m_Name: Music
-  m_TagString: Untagged
+  m_TagString: Music
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3471,6 +3471,10 @@ PrefabInstance:
     - target: {fileID: 6215732538928697605, guid: 7de9b75f1ffb2f84d97e721a06cf1192, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6310000129654297272, guid: 7de9b75f1ffb2f84d97e721a06cf1192, type: 3}
+      propertyPath: tutorialMusicVolume
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 6365713945862527833, guid: 7de9b75f1ffb2f84d97e721a06cf1192, type: 3}
       propertyPath: m_AnchorMax.y

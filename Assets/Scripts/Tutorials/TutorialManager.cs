@@ -21,10 +21,17 @@ public class TutorialManager : MonoBehaviour
     [Tooltip("These tutorials are played in the order they are set")]
     [SerializeField] TutorialElement[] tutorialElements = new TutorialElement[0];
 
+    [Tooltip("The volume for the music to be while the tutorial is playing")]
+    [SerializeField] private float tutorialMusicVolume = 0.05f;
+
     /// <summary>
     /// The AudioSource for game state events.
     /// </summary>
     private AudioSource audioSource;
+
+    private AudioSource musicSource;
+
+    private float musicStartingVolume;
 
     public static bool IsPlaying = false;
 
@@ -39,16 +46,36 @@ public class TutorialManager : MonoBehaviour
     {
         audioSource = GetComponent<AudioSource>();
         tutorialManagerSceneInstance = this;
+
+        var musicObj = GameObject.FindGameObjectWithTag("Music");
+
+        if (musicObj != null)
+        {
+            musicSource = musicObj.GetComponent<AudioSource>();
+            musicStartingVolume = musicSource.volume;
+        }
     }
 
     public void StartTutorial()
     {
+        SetMusicVolume(tutorialMusicVolume);
+
         StartCoroutine(TutorialLoop());
     }
 
     public static void StopTutorial()
     {
+        tutorialManagerSceneInstance.SetMusicVolume(tutorialManagerSceneInstance.musicStartingVolume);
+
         tutorialManagerSceneInstance.StopAllCoroutines();
+    }
+
+    private void SetMusicVolume(float newVolume)
+    {
+        if (musicSource != null)
+        {
+            musicSource.volume = newVolume;
+        }
     }
 
     private IEnumerator TutorialLoop()

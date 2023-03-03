@@ -7,6 +7,7 @@ TagManager:
   - Basket
   - Bad
   - Good
+  - Music
   layers:
   - Default
   - TransparentFX
