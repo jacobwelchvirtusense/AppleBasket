@@ -18,7 +18,6 @@ public class TutorialSubtitleHandler : MonoBehaviour
     private static TutorialSubtitleHandler instance;
 
     private TextMeshProUGUI subtitleText;
-    [SerializeField] private float timeBetweenCharacters = 0.015f;
     #endregion
 
     #region Functions

@@ -65,7 +65,7 @@ public class BasketMovement : MonoBehaviour
 
     #region Catch Mode
     [Header("Catch Mode")]
-    [Range(0.0f, 50.0f)]
+    [Range(0.0f, 180.0f)]
     [Tooltip("The max hand positions to check for catch movement")]
     [SerializeField] private float[] maxCatchPos = new float[] { 0.5f, 1.0f, 1.5f };
 
@@ -103,8 +103,8 @@ public class BasketMovement : MonoBehaviour
 
     private JointType[] handJoints = new JointType[]
     {
-        JointType.WristLeft,
-        JointType.WristRight
+        JointType.HandLeft,
+        JointType.HandRight
     };
     #endregion
     #endregion
@@ -251,8 +251,29 @@ public class BasketMovement : MonoBehaviour
 
             #region Catch Mode
             case MovementType.CATCH:
-                
-                Vector2 centerXCatch = new Vector2(body.Joints[JointType.SpineBase].Position.X+0.5f, body.Joints[JointType.SpineBase].Position.Z);
+
+                //Vector2 centerXCatch = new Vector2(body.Joints[JointType.SpineShoulder].Position.X, body.Joints[JointType.SpineShoulder].Position.Z);
+                var center = GetVector3FromJoint(body.Joints[JointType.SpineShoulder]);
+                center.x -= 0.0f;
+                var handVector1 = GetVector3FromJoint(body.Joints[handJoints[0]]);
+                var handVector2 = GetVector3FromJoint(body.Joints[handJoints[1]]);
+                var handVector = (handVector1 + handVector2)/2;
+                handVector.y = center.y;
+
+                var handDir = handVector-center;
+                var handangle = (Vector3.Angle(handDir, Vector3.forward)-180)*-Mathf.Sign(handVector.x-center.x);
+                /*               Vector2 handDir = (new Vector2(handVector.x, handVector.z) - centerXCatch);
+                var handangle = Vector2.Angle(handDir, Vector2.right) * Mathf.Sign(handVector.x);*/
+
+                //print("Hand 1: " + handVector1);
+                //print("Hand 2: " + handVector2);
+
+                print("dir: " + handDir);
+                //print("Angle: " + handangle);
+
+                targetPos = CalculateCatchTargetPosition(handangle);
+
+                /*
                 var handVector1 = GetVector3FromJoint(body.Joints[handJoints[0]]);
                 Vector2 handDir1 = (new Vector2(handVector1.x, handVector1.z) - centerXCatch);
                 var handangle1 = Vector2.Angle(handDir1, Vector2.up) * Mathf.Sign(handVector1.x);
@@ -266,8 +287,9 @@ public class BasketMovement : MonoBehaviour
 
                 print("dir2: " + handDir2);
                 print("Angle2: " + handangle2);
+                */
 
-                targetPos = CalculateCatchTargetPosition((handangle1+handangle2)/2);
+                //targetPos = CalculateCatchTargetPosition((handangle1+handangle2)/2);
                 //targetPos = CalculateCatchTargetPosition(body.Joints[handJoints[0]].Position.X - centerXCatch, body.Joints[handJoints[1]].Position.X) - centerXCatch;
                 movementSmoothing = catchMovementSmoothing;
                 break;
