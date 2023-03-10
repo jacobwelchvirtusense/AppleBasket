@@ -2,7 +2,7 @@
  * Created by: Jacob Welch
  * Email: jacobw@virtusense.com
  * Company: Virtusense
- * Project: Red Light Green Light
+ * Project: Apple Basket
  * Creation Date: 2/20/2023 8:27:06 AM
  * 
  * Description: TODO
@@ -81,18 +81,20 @@ public class TutorialManager : MonoBehaviour
     private IEnumerator TutorialLoop()
     {
         IsPlaying = true;
+        PostTutorialMessage.showMessage = true;
 
         BasketMovement.LockMovement();
 
         yield return Countdown.CountdownLoop();
 
+        /*
         foreach(var tutorial in tutorialElements)
         {
             if (CheckTutorialBranch(tutorial.TutorialBranchReason))
             {
                 yield return PlayTutorial(tutorial);
             }
-        }
+        }*/
 
         GameController.instance.PlayAgain();
 

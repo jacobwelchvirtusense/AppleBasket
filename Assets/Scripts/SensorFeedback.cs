@@ -71,7 +71,7 @@ public class SensorFeedback : MonoBehaviour
         bodyManager = FindObjectOfType<BodySourceManager>();
     }
 
-    private void ResetFeeback()
+    public void ResetFeeback()
     {
         canShowMessage = true;
     }
