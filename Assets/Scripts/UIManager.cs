@@ -11,6 +11,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,6 +24,12 @@ public class UIManager : MonoBehaviour
     private static UIManager instance;
 
     private static int timerStartingAmount = 0;
+
+    [SerializeField] private GameObject infiniteUI;
+    [SerializeField] private GameObject[] hearts;
+    private int currentHeart = 0;
+    private int badApples = 0;
+    private int applesMissed = 0;
 
     // UI objects
     [SerializeField] private TextMeshProUGUI countDown;
@@ -44,7 +51,6 @@ public class UIManager : MonoBehaviour
     private static Image TimerBar1;
     private static Image TimerBar2;
 
-    
     [Tooltip("The end game display for the amount of good apples caught")]
     [SerializeField] private EndGameDataDisplay goodApplesEndGame;
     
@@ -169,17 +175,34 @@ public class UIManager : MonoBehaviour
         if (InstanceDoesntExist() || IsntValid(GoodApplesEndGame) || IsntValid(BadApplesEndGame)) return;
         GoodApplesEndGame.UpdateText(goodApples.ToString());
         BadApplesEndGame.UpdateText(badApples.ToString());
+
+        instance.badApples = badApples;
+        instance.RefreshHearts();
     }
 
     /// <summary>
     /// Updates the count of apples displayed at the end of the game.
     /// </summary>
-    /// <param name="goodApples">The amount of good apples.</param>
-    /// <param name="badApples">The amount of bad apples.</param>
     public static void UpdateApplesMissedCount(int goodApplesMissed)
     {
         if (InstanceDoesntExist() || IsntValid(GoodApplesMissedEndGame)) return;
         GoodApplesMissedEndGame.UpdateText(goodApplesMissed.ToString());
+
+        instance.applesMissed = goodApplesMissed;
+        instance.RefreshHearts();
+    }
+
+    private void RefreshHearts()
+    {
+        var heartsToRemove = applesMissed + badApples;
+
+        print("Hearts to remove: " + heartsToRemove);
+
+        for(int i = 0; i < heartsToRemove; i++)
+        {
+            if(i < hearts.Length)
+            hearts[i].SetActive(false);
+        }
     }
 
     #region Timer
@@ -195,6 +218,8 @@ public class UIManager : MonoBehaviour
             var pos = TimerUI.transform.position;
             pos.y += 6.0f;
             TimerUI.transform.position = pos;
+
+            UpdateTimerBars(-1);
         }
     }
 
@@ -229,6 +254,12 @@ public class UIManager : MonoBehaviour
     private static void UpdateTimerBars(float newTime)
     {
         if (IsntValid(TimerBar1) || IsntValid(TimerBar2)) return;
+
+        var isNotInfinite = newTime != -1;
+        TimerUI.gameObject.SetActive(isNotInfinite);
+        TimerBar1.gameObject.SetActive(isNotInfinite);
+        TimerBar2.gameObject.SetActive(isNotInfinite);
+        instance.infiniteUI.SetActive(!isNotInfinite);
 
         TimerBar1.fillAmount = newTime / timerStartingAmount;
         TimerBar2.fillAmount = newTime / timerStartingAmount;

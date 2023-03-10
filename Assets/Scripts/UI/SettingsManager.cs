@@ -7,6 +7,7 @@
  * 
  * Description: Handles the inputs into the settings menu and hooks to its changes.
 *********************************/
+using com.rfilkov.kinect;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -93,6 +94,22 @@ public class SettingsManager : MonoBehaviour
         RefreshMovementDifficulty();
         RefreshInputType();
         RefreshAudio();
+    }
+    #endregion
+
+    #region Show Sensor Data
+    private void OnEnable()
+    {
+        FindObjectOfType<KinectManager>().shouldDisplaySensorData = true;
+    }
+
+    private void OnDisable()
+    {
+        var kinnectManager = FindObjectOfType<KinectManager>();
+
+        if (kinnectManager == null) return;
+
+        kinnectManager.shouldDisplaySensorData = false;
     }
     #endregion
 

@@ -87,14 +87,14 @@ public class TutorialManager : MonoBehaviour
 
         yield return Countdown.CountdownLoop();
 
-        /*
+        
         foreach(var tutorial in tutorialElements)
         {
             if (CheckTutorialBranch(tutorial.TutorialBranchReason))
             {
                 yield return PlayTutorial(tutorial);
             }
-        }*/
+        }
 
         GameController.instance.PlayAgain();
 

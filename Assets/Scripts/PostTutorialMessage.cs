@@ -26,6 +26,7 @@ public class PostTutorialMessage : MonoBehaviour
     {
         if (showMessage)
         {
+            showMessage = false;
             FindObjectOfType<KinectManager>().shouldDisplaySensorData = false;
             postTutorialMessage.SetActive(true);
             settings.SetActive(false);

@@ -150,6 +150,9 @@ public class GameController : MonoBehaviour
     public static void UpdateTimer(int newTimerSlot)
     {
         instance.currentTimer = newTimerSlot;
+        float t = instance.GetTimerAmountHelper();
+
+        UIManager.UpdateTimer(t);
     }
 
     #region Updating Score
@@ -187,6 +190,8 @@ public class GameController : MonoBehaviour
             PlaySound(badPickupSound, badPickupSoundVolume);
             badApples++;
         }
+
+        DisplayGameData();
     }
 
     private int ComboModifier(int increment)
@@ -224,6 +229,7 @@ public class GameController : MonoBehaviour
     public void UpdateGoodApplesMissed()
     {
         ++goodApplesMissed;
+        DisplayGameData();
     }
 
     public static void ResetCombo()
